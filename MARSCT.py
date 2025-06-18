@@ -25,9 +25,9 @@ verdig = "0.0.5"
 
 def fetch_mod_info(item, mod_dict, seen_mods):
     if item in seen_mods:
-        return  # Skip if already processed to avoid duplicates
+        return 
 
-    seen_mods.add(item)  # Mark as processed
+    seen_mods.add(item)
     itemnew = {"modId": item}
 
     response = requests.get(f"https://reforger.armaplatform.com/workshop/{item}")
@@ -42,10 +42,9 @@ def fetch_mod_info(item, mod_dict, seen_mods):
 
     hrefs = [a['href'] for a in soup.find_all('a', href=True)]
     
-    # Extract the unique IDs using regex
     pattern = re.compile(r'/workshop/([A-F0-9]+)-')
-    dependencies = {match.group(1) for href in hrefs if (match := pattern.search(href))}  # Use set for uniqueness
-
+    dependencies = {match.group(1) for href in hrefs if (match := pattern.search(href))}  
+    
     itemnew["version"] = version_element.text.strip() if version_element else "Version not found"
     name_element = soup.select_one("h1.text-3xl.font-bold.uppercase")
     itemnew["name"] = name_element.text.strip() if name_element else "Name not found"
@@ -76,7 +75,7 @@ def Do():
 
         def fetch_and_store(item):
             fetch_mod_info(item.strip(), mod_dict, seen_mods)
-            gui.after(100, update_gui)  # Schedule GUI update safely
+            gui.after(100, update_gui) 
 
         for item in modlist:
             threading.Thread(target=fetch_and_store, args=(item,), daemon=True).start()
@@ -141,7 +140,7 @@ def UpdateMods():
 
     def fetch_and_store(item):
         fetch_mod_info(item, mod_dict, seen_mods)
-        gui.after(200, update_gui)  # Slight delay for better UI response
+        gui.after(200, update_gui)
 
     for item in modlist:
         threading.Thread(target=fetch_and_store, args=(item,), daemon=True).start()
