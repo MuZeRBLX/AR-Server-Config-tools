@@ -21,14 +21,17 @@ def undo_action():
         print("Nothing to undo!")
 
 
-verdig = "0.0.5"
+verdig = "0.1.0"
 
 def fetch_mod_info(item, mod_dict, seen_mods):
     if item in seen_mods:
         return 
-
+    
     seen_mods.add(item)
     itemnew = {"modId": item}
+
+    if item == "":
+        return
 
     response = requests.get(f"https://reforger.armaplatform.com/workshop/{item}")
     soup = BeautifulSoup(response.text, "html.parser")
@@ -45,6 +48,15 @@ def fetch_mod_info(item, mod_dict, seen_mods):
     pattern = re.compile(r'/workshop/([A-F0-9]+)-')
     dependencies = {match.group(1) for href in hrefs if (match := pattern.search(href))}  
     
+    if not version_element:
+        for div in soup.select(".flex.items-center.justify-between.border-b"):
+            response = requests.get(f"https://reforger.armaplatform.com/workshop/{item}")
+            soup = BeautifulSoup(response.text, "html.parser")
+            dt = div.find("dt")
+            if dt and dt.text.strip() == "Version":
+                version_element = div.find("dd")
+                break
+
     itemnew["version"] = version_element.text.strip() if version_element else "Version not found"
     name_element = soup.select_one("h1.text-3xl.font-bold.uppercase")
     itemnew["name"] = name_element.text.strip() if name_element else "Name not found"
@@ -155,7 +167,6 @@ enterbut4 = tk.Button(Frame, text="UpdateMods", command=UpdateMods, background="
 enterbut2 = tk.Button(Frame, text="GetModNames", command=ConvertToNames, background="#121212", foreground="White")
 enterbut3 = tk.Button(Frame, text="GetModIDs", command=ConvertToIDs, background="#121212", foreground="White")
 enterbut3 = tk.Button(Frame, text="Undo", command=undo_action, background="#121212", foreground="White")
-
 Version = tk.Label(Frame, text=f"--- Version {verdig} ---", background="#121212", foreground="White", pady=8, font=("Arial", 12, "bold"))
 
 Title.pack()
