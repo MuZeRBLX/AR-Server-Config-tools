@@ -27,11 +27,10 @@ jobs:
         shell: cmd
         run: |
           pyinstaller --noconfirm --onedir --windowed ^
-            --add-data "plugins;plugins/" ^
-            Program.py
+            MARSCT.py
 
       - name: 📤 Upload EXE as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SimpleFileExplorer
+          name: MARSCT
           path: dist/
