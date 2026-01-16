@@ -23,6 +23,16 @@ def undo_action():
 
 verdig = "0.1.0"
 
+def SizeConvert(sizetext:str):
+    text = sizetext.strip().upper()
+    if text.endswith(" KB"):
+        return round((float(sizetext.removesuffix(" KB"))/1000000),3)
+    elif text.endswith(" MB"):
+        return round((float(sizetext.removesuffix(" MB"))/1000),3)
+    elif text.endswith(" GB"):
+        return round(float(sizetext.removesuffix(" GB")),3)
+    return None
+
 def fetch_mod_info(item, mod_dict, seen_mods):
     if item in seen_mods:
         return 
@@ -37,6 +47,7 @@ def fetch_mod_info(item, mod_dict, seen_mods):
     soup = BeautifulSoup(response.text, "html.parser")
 
     version_element = None
+    Size_element = None
     for div in soup.select(".flex.items-center.justify-between.border-b"):
         dt = div.find("dt")
         if dt and dt.text.strip() == "Version":
@@ -47,19 +58,27 @@ def fetch_mod_info(item, mod_dict, seen_mods):
     
     pattern = re.compile(r'/workshop/([A-F0-9]+)-')
     dependencies = {match.group(1) for href in hrefs if (match := pattern.search(href))}  
-    
-    if not version_element:
-        for div in soup.select(".flex.items-center.justify-between.border-b"):
-            response = requests.get(f"https://reforger.armaplatform.com/workshop/{item}")
-            soup = BeautifulSoup(response.text, "html.parser")
-            dt = div.find("dt")
-            if dt and dt.text.strip() == "Version":
-                version_element = div.find("dd")
-                break
 
-    itemnew["version"] = version_element.text.strip() if version_element else "Version not found"
+    for row in soup.select(".flex.items-center.justify-between.border-b"):
+        dt = row.find("dt")
+        dd = row.find("dd")
+        
+        if not dt or not dd:
+            continue
+            
+        key = dt.get_text(strip=True)
+        value = dd.get_text(strip=True)
+        
+        if key == "Version":
+            version_element = value
+            
+        elif key == "Version size":
+            Size_element = SizeConvert(value)
+
+    itemnew["version"] = version_element if version_element else "Version not found"
     name_element = soup.select_one("h1.text-3xl.font-bold.uppercase")
-    itemnew["name"] = name_element.text.strip() if name_element else "Name not found"
+    itemnew["name"] = name_element.text if name_element else "Name not found"
+    itemnew["size"] = Size_element
 
     mod_dict[item] = itemnew  # Store mod info
     
@@ -73,6 +92,8 @@ def Do():
     try:
         y = json.loads(modslast.get(1.0, tk.END))
     except json.JSONDecodeError:
+
+        UpdateUndo()
     
         modlist = modlistinp.split(",")
 
@@ -80,10 +101,45 @@ def Do():
         seen_mods = set()
 
         def update_gui():
-            UpdateUndo()
             sorted_mods = sorted(mod_dict.values(), key=lambda x: x["name"])  # Sort by mod name
             modslast.delete(1.0, tk.END)
             modslast.insert(tk.END, json.dumps(sorted_mods, indent=4))
+
+        def fetch_and_store(item):
+            fetch_mod_info(item.strip(), mod_dict, seen_mods)
+            gui.after(100, update_gui) 
+
+        for item in modlist:
+            threading.Thread(target=fetch_and_store, args=(item,), daemon=True).start()
+            
+        return
+
+    print("Error: Cannot Be JSON")
+    return
+
+def Do2():
+    modlistinp = modslast.get(1.0, tk.END).strip()
+    try:
+        y = json.loads(modslast.get(1.0, tk.END))
+    except json.JSONDecodeError:
+
+        UpdateUndo()
+    
+        modlist = modlistinp.split(",")
+
+        mod_dict = {}
+        seen_mods = set()
+
+        def update_gui():
+            sorted_mods = sorted(mod_dict.values(), key=lambda x: x["name"])  # Sort by mod name
+
+            size = 0.0
+
+            for i in sorted_mods:
+                size +=  round(i["size"],3)
+
+            modslast.delete(1.0, tk.END)
+            modslast.insert(tk.END, f"{size} GB")
 
         def fetch_and_store(item):
             fetch_mod_info(item.strip(), mod_dict, seen_mods)
@@ -127,6 +183,22 @@ def ConvertToNames():
 
     for item in y:
         modslast.insert(tk.END, f"{item['name']}\n")
+
+def ConvertToGB():
+    try:
+        y = json.loads(modslast.get(1.0, tk.END))
+    except json.JSONDecodeError:
+        print("Error: Invalid JSON")
+        return
+
+    UpdateUndo()
+
+    modslast.delete(1.0, tk.END)
+
+
+
+    for item in y:
+        modslast.insert(tk.END, f"{item['name']}")
         
 def UpdateMods():
     modlist = []
@@ -162,11 +234,12 @@ gui.config(background="#121212")
 Title = tk.Label(gui, text="MuZe's AR Server Config tools", background="#121212", foreground="White", font=("Arial", 40, "bold"), pady=20)
 modslast = tk.Text(gui, background="#121212", foreground="White", font=("Arial", 12, "bold"), width=100, insertbackground="White",highlightthickness=2)
 Frame = tk.Frame(gui, background="#121212",highlightbackground="White",highlightthickness=2,padx=100)
-enterbut = tk.Button(Frame, text="GetMods", command=Do, background="#121212", foreground="White")
+enterbut = tk.Button(Frame, text="GetModsSize (From List)", command=Do2, background="#121212", foreground="White")
+enterbut5 = tk.Button(Frame, text="GetMods", command=Do, background="#121212", foreground="White")
 enterbut4 = tk.Button(Frame, text="UpdateMods", command=UpdateMods, background="#121212", foreground="White")
 enterbut2 = tk.Button(Frame, text="GetModNames", command=ConvertToNames, background="#121212", foreground="White")
 enterbut3 = tk.Button(Frame, text="GetModIDs", command=ConvertToIDs, background="#121212", foreground="White")
-enterbut3 = tk.Button(Frame, text="Undo", command=undo_action, background="#121212", foreground="White")
+enterbut1 = tk.Button(Frame, text="Undo", command=undo_action, background="#121212", foreground="White")
 Version = tk.Label(Frame, text=f"--- Version {verdig} ---", background="#121212", foreground="White", pady=8, font=("Arial", 12, "bold"))
 
 Title.pack()
