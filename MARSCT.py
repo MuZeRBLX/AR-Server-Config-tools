@@ -7,6 +7,10 @@ import re
 
 undo_stack = []
 
+verdig = "0.1.2"
+
+print(f"RUNNING MARSCT\nVERSION {verdig}")
+
 def UpdateUndo():
 
     undo_stack.append(modslast.get(1.0, tk.END).strip())
@@ -19,9 +23,6 @@ def undo_action():
         modslast.insert(tk.END, last_state)
     else:
         print("Nothing to undo!")
-
-
-verdig = "0.1.0"
 
 def SizeConvert(sizetext:str):
     text = sizetext.strip().upper()
@@ -71,7 +72,6 @@ def fetch_mod_info(item, mod_dict, seen_mods):
         
         if key == "Version":
             version_element = value
-            
         elif key == "Version size":
             Size_element = SizeConvert(value)
 
@@ -121,8 +121,16 @@ def Do2():
     modlistinp = modslast.get(1.0, tk.END).strip()
     try:
         y = json.loads(modslast.get(1.0, tk.END))
-    except json.JSONDecodeError:
+        UpdateUndo()
 
+        size = 0.0
+        for x in y:
+            size+=x["size"]
+        modslast.delete(1.0, tk.END)
+        modslast.insert(tk.END, f"{size} GB")
+
+        return
+    except json.JSONDecodeError:
         UpdateUndo()
     
         modlist = modlistinp.split(",")
@@ -149,8 +157,7 @@ def Do2():
             threading.Thread(target=fetch_and_store, args=(item,), daemon=True).start()
             
         return
-
-    print("Error: Cannot Be JSON")
+    print("Wrong Format")
     return
 
 
@@ -174,7 +181,31 @@ def ConvertToNames():
     try:
         y = json.loads(modslast.get(1.0, tk.END))
     except json.JSONDecodeError:
-        print("Error: Invalid JSON")
+        UpdateUndo()
+        modlistinp = modslast.get(1.0, tk.END).strip()
+        modlist = modlistinp.split(",")
+
+        mod_dict = {}
+        seen_mods = set()
+
+        def update_gui():
+            sorted_mods = sorted(mod_dict.values(), key=lambda x: x["name"])  # Sort by mod name
+
+            fin = ""
+
+            for i in sorted_mods:
+                fin+=(i["name"]+"\n")
+
+            modslast.delete(1.0, tk.END)
+            modslast.insert(tk.END, f"{fin}")
+
+        def fetch_and_store(item):
+            fetch_mod_info(item.strip(), mod_dict, seen_mods)
+            gui.after(100, update_gui) 
+
+        for item in modlist:
+            threading.Thread(target=fetch_and_store, args=(item,), daemon=True).start()
+            
         return
 
     UpdateUndo()
@@ -234,7 +265,7 @@ gui.config(background="#121212")
 Title = tk.Label(gui, text="MuZe's AR Server Config tools", background="#121212", foreground="White", font=("Arial", 40, "bold"), pady=20)
 modslast = tk.Text(gui, background="#121212", foreground="White", font=("Arial", 12, "bold"), width=100, insertbackground="White",highlightthickness=2)
 Frame = tk.Frame(gui, background="#121212",highlightbackground="White",highlightthickness=2,padx=100)
-enterbut = tk.Button(Frame, text="GetModsSize (From List)", command=Do2, background="#121212", foreground="White")
+enterbut = tk.Button(Frame, text="GetModsSize", command=Do2, background="#121212", foreground="White")
 enterbut5 = tk.Button(Frame, text="GetMods", command=Do, background="#121212", foreground="White")
 enterbut4 = tk.Button(Frame, text="UpdateMods", command=UpdateMods, background="#121212", foreground="White")
 enterbut2 = tk.Button(Frame, text="GetModNames", command=ConvertToNames, background="#121212", foreground="White")
