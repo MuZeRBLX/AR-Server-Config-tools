@@ -12,6 +12,9 @@ Tools:
 
 ![image](https://github.com/user-attachments/assets/9decd5b1-959c-496b-94ef-813e19dde6e7)
 
+## GetModsSize
+Gives total size of all mods from ModIds or modlist.
+
 ## GetMods
 Converts ModIds to modlist.
 
@@ -19,7 +22,7 @@ Converts ModIds to modlist.
 Updates mods to latest public, listed, version.
 
 ## GetModNames
-Converts modlist into mod names.
+Converts modlist or ModIds into mod names.
 
 ## GetModIDs
 Gives Formatted IDs from modlist.
