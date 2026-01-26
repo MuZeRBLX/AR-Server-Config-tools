@@ -214,7 +214,7 @@ def GetModNames(event=None):
         modlist = json.loads(get)
         sum = ""
         for v in modlist:
-            sum+=f"{v["name"]}\n"
+            sum+=f"{v['name']}\n"
 
         textbox.delete(1.0,tk.END)
         textbox.insert(1.0,f"{sum}")
@@ -229,7 +229,7 @@ def GetModNames(event=None):
 
         sum = ""
         for v in modlist:
-            sum+=f"{v["name"]}\n"
+            sum+=f"{v['name']}\n"
 
         textbox.delete(1.0,tk.END)
         textbox.insert(1.0,f"{sum}")
