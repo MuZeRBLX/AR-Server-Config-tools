@@ -12,23 +12,16 @@ Tools:
 
 ![image](https://github.com/user-attachments/assets/9decd5b1-959c-496b-94ef-813e19dde6e7)
 
-## GetModsSize
-Gives total size of all mods from ModIds or modlist.
+Hello! Welcome to MARSCT (MuZe's Arma Reforger Server Config Tool)!
+This is a way to help you do mods. It'll give you everything to put in the "mods":[] <---- area\n--------\n
+KEYBINDS\n
+--------\n
+(CTRL+HELP)/F1-Gives you this menu.\n
+(CTRL+Z)Undo-Undoes an action\n
+(CTRL+Y)Redo-Redoes an action\n
+(CTRL+SHIFT+D)Clear-Clears everything\n
+(CTRL+A)-Selects everything\n
+(CTRL+ml>GetMods-Gets a json of the mods\n
+(CTRL+ms)GetModsSize-Gets the total size of the mods\n
+(CTRL+mn)GetModNames-Gets the names of the mods in a list\
 
-## GetMods
-Converts ModIds to modlist.
-
-## UpdateMods
-Updates mods to latest public, listed, version.
-
-## GetModNames
-Converts modlist or ModIds into mod names.
-
-## Clear
-Clears modlist/modids.
-
-## GetModIDs
-Gives Formatted IDs from modlist.
-
-## Undo
-Self-Explanatory
