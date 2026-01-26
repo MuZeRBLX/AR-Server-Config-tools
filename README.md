@@ -24,6 +24,9 @@ Updates mods to latest public, listed, version.
 ## GetModNames
 Converts modlist or ModIds into mod names.
 
+## Clear
+Clears modlist/modids.
+
 ## GetModIDs
 Gives Formatted IDs from modlist.
 

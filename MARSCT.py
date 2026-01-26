@@ -5,9 +5,11 @@ import threading
 import tkinter as tk
 import re
 
+BUTROWS=4
 undo_stack = []
-
-verdig = "0.1.2"
+verdig = "0.1.23"
+global modcount
+modcount=0
 
 print(f"RUNNING MARSCT\nVERSION {verdig}")
 
@@ -35,6 +37,7 @@ def SizeConvert(sizetext:str):
     return None
 
 def fetch_mod_info(item, mod_dict, seen_mods):
+    global modcount
     if item in seen_mods:
         return 
     
@@ -82,16 +85,24 @@ def fetch_mod_info(item, mod_dict, seen_mods):
 
     mod_dict[item] = itemnew  # Store mod info
     
+    modcount+=1
+    updatemodsloaded()
+
     # Add dependencies as separate mods
     for dep in dependencies:
         fetch_mod_info(dep, mod_dict, seen_mods)
 
 
 def Do():
+    global modcount
+    print("Getting Mods")
     modlistinp = modslast.get(1.0, tk.END).strip()
     try:
         y = json.loads(modslast.get(1.0, tk.END))
     except json.JSONDecodeError:
+
+        modcount=0
+        updatemodsloaded()
 
         UpdateUndo()
     
@@ -118,6 +129,7 @@ def Do():
     return
 
 def Do2():
+    global modcount
     modlistinp = modslast.get(1.0, tk.END).strip()
     try:
         y = json.loads(modslast.get(1.0, tk.END))
@@ -132,6 +144,9 @@ def Do2():
         return
     except json.JSONDecodeError:
         UpdateUndo()
+
+        modcount=0
+        updatemodsloaded()
     
         modlist = modlistinp.split(",")
 
@@ -230,6 +245,16 @@ def ConvertToGB():
 
     for item in y:
         modslast.insert(tk.END, f"{item['name']}")
+
+def Clear():
+    UpdateUndo()
+    modslast.delete(1.0, tk.END)
+
+def SelAll(event=None):
+    modslast.tag_add("sel","1.0","end")
+    modslast.mark_set(tk.INSERT,"end")
+    modslast.see(tk.INSERT)
+    return "break"
         
 def UpdateMods():
     modlist = []
@@ -260,24 +285,44 @@ def UpdateMods():
     for item in modlist:
         threading.Thread(target=fetch_and_store, args=(item,), daemon=True).start()
 
+def updatemodsloaded():
+    MDCount.config(text=f"Mods Loaded:{modcount}")
+
 gui = tk.Tk()
 gui.config(background="#121212")
 Title = tk.Label(gui, text="MuZe's AR Server Config tools", background="#121212", foreground="White", font=("Arial", 40, "bold"), pady=20)
 modslast = tk.Text(gui, background="#121212", foreground="White", font=("Arial", 12, "bold"), width=100, insertbackground="White",highlightthickness=2)
 Frame = tk.Frame(gui, background="#121212",highlightbackground="White",highlightthickness=2,padx=100)
-enterbut = tk.Button(Frame, text="GetModsSize", command=Do2, background="#121212", foreground="White")
-enterbut5 = tk.Button(Frame, text="GetMods", command=Do, background="#121212", foreground="White")
-enterbut4 = tk.Button(Frame, text="UpdateMods", command=UpdateMods, background="#121212", foreground="White")
-enterbut2 = tk.Button(Frame, text="GetModNames", command=ConvertToNames, background="#121212", foreground="White")
-enterbut3 = tk.Button(Frame, text="GetModIDs", command=ConvertToIDs, background="#121212", foreground="White")
-enterbut1 = tk.Button(Frame, text="Undo", command=undo_action, background="#121212", foreground="White")
 Version = tk.Label(Frame, text=f"--- Version {verdig} ---", background="#121212", foreground="White", pady=8, font=("Arial", 12, "bold"))
+MDCount = tk.Label(Frame, text=f"Mods Loaded:0", background="#121212", foreground="White", pady=8, font=("Arial", 12, "bold"))
+Frame2 = tk.Frame(Frame, background="#121212",highlightbackground="White",highlightthickness=0,padx=0)
+enterbut = tk.Button(Frame2, text="GetModsSize", command=Do2, background="#121212", foreground="White")
+enterbut5 = tk.Button(Frame2, text="GetMods", command=Do, background="#121212", foreground="White")
+enterbut4 = tk.Button(Frame2, text="UpdateMods", command=UpdateMods, background="#121212", foreground="White")
+enterbut2 = tk.Button(Frame2, text="GetModNames", command=ConvertToNames, background="#121212", foreground="White")
+enterbut3 = tk.Button(Frame2, text="GetModIDs", command=ConvertToIDs, background="#121212", foreground="White")
+enterbut7 = tk.Button(Frame2, text="SelectAll", command=SelAll, background="#121212", foreground="White")
+enterbut6 = tk.Button(Frame2, text="Clear", command=Clear, background="#121212", foreground="White")
+enterbut1 = tk.Button(Frame2, text="Undo", command=undo_action, background="#121212", foreground="White")
 
 Title.pack()
 modslast.pack()
 Frame.pack()
-for i in Frame.winfo_children():
-    i.pack()
+Frame.grid_columnconfigure(1)
+Frame.grid_rowconfigure(3)
+col = int(len(Frame2.winfo_children())/BUTROWS)
+Frame2.grid_columnconfigure(col+1)
+Frame2.grid_rowconfigure(BUTROWS)
+
+for i,v in enumerate(Frame2.winfo_children()):
+    v.grid(row=i%BUTROWS,column=int(i/BUTROWS))
+
+Frame2.grid(row=0)
+Version.grid(row=1)
+MDCount.grid(row=2)
+
+modslast.bind("<Control-a>",SelAll)
+modslast.bind("<Control-A>",SelAll)
 
 gui.title = "Set"
 
