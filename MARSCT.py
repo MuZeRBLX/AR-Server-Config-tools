@@ -5,7 +5,7 @@ import threading
 import tkinter as tk
 import tkinter.tix as tix
 import re
-from .PluginAPI.PluginAPI import PluginApi
+from PluginAPI.PluginAPI import PluginApi
 import importlib
 import os
 import traceback
