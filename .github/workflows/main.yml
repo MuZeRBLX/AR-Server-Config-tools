@@ -28,9 +28,8 @@ jobs:
       - name: 🛠️ Build with PyInstaller
         shell: cmd
         run: |
-          pyinstaller --noconfirm --onedir --windowed ^
-            --add-data "PluginAPI;." ^
-            --add-data "plugins;." ^
+          pyinstaller --noconfirm --onefile --windowed ^
+            --add-data "PluginAPI;PluginAPI" ^
             --collect-all PluginAPI ^
             MARSCT.py
 
