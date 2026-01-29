@@ -108,8 +108,17 @@ def load_plugins(api, plugin_dir="plugins"):
             print(f"[PLUGIN] Failed to load {filename}")
             traceback.print_exc()
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+    # Running as bundled exe (--onefile or --onedir)
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    # Running as normal python script (dev)
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 PLUGIN_DIR = os.path.join(BASE_DIR, "plugins")
+
+# Optional: create if missing (user-friendly)
+os.makedirs(PLUGIN_DIR, exist_ok=True)
 
 load_plugins(PluginApi,plugin_dir=PLUGIN_DIR)
 
