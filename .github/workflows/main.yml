@@ -29,8 +29,8 @@ jobs:
         shell: cmd
         run: |
           pyinstaller --noconfirm --onedir --windowed ^
-            --add-data "PluginAPI;PluginAPI" ^
-            --add-data "plugins;plugins" ^
+            --add-data "PluginAPI;." ^
+            --add-data "plugins;." ^
             --collect-all PluginAPI ^
             MARSCT.py
 
