@@ -191,15 +191,6 @@ plugin_api_dir = os.path.join(script_dir, "PluginAPI")
 sys.path.insert(0, script_dir)
 sys.path.insert(0, plugin_api_dir)
 
-try:
-    from fetchmods import fetch_mod_info as c_fetch_mod_info
-    print("[SUCCESS] Loaded C module fetchmods.so")
-except ImportError as e:
-    print(f"[WARNING] Failed to load fetchmods.so: {e}")
-    print(f"  sys.path includes: {sys.path}")
-    print(f"  Looking in: {script_dir} and {plugin_api_dir}")
-    c_fetch_mod_info = None
-
 def fetch_mod_info(item, seen_mods):
     global modcount
     
@@ -211,86 +202,53 @@ def fetch_mod_info(item, seen_mods):
     
     print(f"[DEBUG] Fetching mod {item} ...")
 
-    # ────────────────────────────────────────────────────────────────
-    #  Use the fast C version if available
-    # ────────────────────────────────────────────────────────────────
-    if c_fetch_mod_info is not None:
-        # C function expects list of seen mods (not set)
-        print(f"[DEBUG] → Using C version for {item}")
-        seen_list = list(seen_mods)
-        result = c_fetch_mod_info(item, seen_list)
-        
-        if result is None:
-            print(f"[DEBUG] C returned None for {item}")
-            return None
-        print(f"[DEBUG] C returned: {result}")
+    itemnew = {"modId": item}
 
-        modcount += 1
-        updatemodcount()
-        
-        return result
-    
-    
-    # ────────────────────────────────────────────────────────────────
-    #  Fallback: your original slow Python version
-    # ────────────────────────────────────────────────────────────────
-    else:
-        import requests
-        from bs4 import BeautifulSoup
-        import re
-        
-        itemnew = {"modId": item}
-        
-        try:
-            response = requests.get(f"https://reforger.armaplatform.com/workshop/{item}", timeout=15)
-            response.raise_for_status()
-        except Exception as e:
-            print(f"Request failed for {item}: {e}")
-            return None
-        
-        soup = BeautifulSoup(response.text, "html.parser")
-        
-        version_element = None
-        size_element = None
-        
-        # First attempt – exact selector for Version
-        for div in soup.select(".flex.items-center.justify-between.border-b"):
-            dt = div.find("dt")
-            if dt and dt.text.strip() == "Version":
-                version_element = div.find("dd")
-                break
-        
-        # Dependencies from links
-        hrefs = [a['href'] for a in soup.find_all('a', href=True)]
-        pattern = re.compile(r'/workshop/([A-F0-9]+)-')
-        dependencies = {match.group(1) for href in hrefs if (match := pattern.search(href))}
-        
-        # Looser selector for version & size
-        for row in soup.select('div[class*="flex"][class*="justify-between"][class*="border-b"]'):
-            dt = row.find("dt")
-            dd = row.find("dd")
-            if not dt or not dd:
-                continue
-            key_text = dt.get_text(strip=True).lower()
-            value_text = dd.get_text(strip=True)
-            
-            if "version" in key_text and "size" not in key_text:
-                version_element = value_text
-            elif "size" in key_text:
-                size_element = value_text
-        
-        itemnew["version"] = version_element if version_element else "Version not found"
-        
-        name_element = soup.select_one("h1.text-3xl.font-bold.uppercase")
-        itemnew["name"] = name_element.text.strip() if name_element else "Name not found"
-        
-        itemnew["size"] = SizeConvert(size_element)
-        itemnew["deps"] = dependencies
-        
-        modcount += 1
-        updatemodcount()
-        
-        return itemnew
+    try:
+        response = requests.get(f"https://reforger.armaplatform.com/workshop/{item}", timeout=15)
+        response.raise_for_status()
+    except Exception as e:
+        print(f"Request failed for {item}: {e}")
+        return None
+
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    version_element = None
+    size_element = None
+
+    # Dependencies from links
+    hrefs = [a['href'] for a in soup.find_all('a', href=True)]
+    pattern = re.compile(r'/workshop/([A-F0-9]+)-')
+    dependencies = {match.group(1) for href in hrefs if (match := pattern.search(href))}
+
+    # Selector for version & size
+    for row in soup.select('div[class*="flex"][class*="justify-between"][class*="border-b"]'):
+        dt = row.find("dt")
+        dd = row.find("dd")
+        if not dt or not dd:
+            continue
+        key_text = dt.get_text(strip=True).lower()
+        value_text = dd.get_text(strip=True)
+
+        if "game" in key_text and "version" in key_text:
+            continue  # skip "Game Version" explicitly
+        elif "version" in key_text and "size" not in key_text:
+            version_element = value_text
+        elif "size" in key_text:
+            size_element = value_text
+
+    itemnew["version"] = version_element if version_element else "Version not found"
+
+    name_element = soup.select_one("h1.text-3xl.font-bold.uppercase")
+    itemnew["name"] = name_element.text.strip() if name_element else "Name not found"
+
+    itemnew["size"] = SizeConvert(size_element)
+    itemnew["deps"] = dependencies
+
+    modcount += 1
+    updatemodcount()
+
+    return itemnew
 
 def GetModStuff(Deps, seen):
     modlist = []
