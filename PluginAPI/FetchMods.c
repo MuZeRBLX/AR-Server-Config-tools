@@ -241,12 +241,25 @@ ModInfo* fetch_mod_info(const char* item, char** seen_mods, int seen_count) {
 
                 if (key_trim) {
                     fprintf(stderr, "[C] dt/dd pair: '%s' → '%s'\n", key_trim, val_trim ? val_trim : "NULL");
-                    if (strstr(key_trim, "Version") &&
-                    !strstr(key_trim, "size") &&
-                    !strstr(key_trim, "Game")) {
-                    free(version);
-                    version = val_trim ? strdup(val_trim) : strdup("Version not found");
-                } else if (strstr(key_trim, "size")) {
+
+                    // Case-insensitive lowercase copy of the key for robust matching
+                    char key_lower[256];
+                    size_t klen = strlen(key_trim);
+                    if (klen >= sizeof(key_lower)) klen = sizeof(key_lower) - 1;
+                    for (size_t k = 0; k < klen; k++) key_lower[k] = (char)tolower((unsigned char)key_trim[k]);
+                    key_lower[klen] = '\0';
+
+                    int has_version = strstr(key_lower, "version") != NULL;
+                    int has_size = strstr(key_lower, "size") != NULL;
+                    int has_game = strstr(key_lower, "game") != NULL;
+
+                    if (has_game && has_version) {
+                        // Explicitly skip "Game Version" (any casing, e.g. "Game Version", "game version", "GAME VERSION")
+                        fprintf(stderr, "[C] Skipping game version field: '%s'\n", key_trim);
+                    } else if (has_version && !has_size) {
+                        free(version);
+                        version = val_trim ? strdup(val_trim) : strdup("Version not found");
+                    } else if (has_size) {
                         free(size_str);
                         size_str = val_trim ? strdup(val_trim) : NULL;
                     }
