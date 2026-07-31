@@ -128,7 +128,7 @@ load_plugins(PluginApi,plugin_dir=PLUGIN_DIR)
 BUTTONROWS=4
 undo_stack = []
 redo_stack = []
-verdig = "0.1.23"
+verdig = "0.1.5"
 global modcount
 modcount=0
 
