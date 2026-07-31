@@ -9,6 +9,7 @@ from PluginAPI.PluginAPI import PluginApi
 import importlib
 import os
 import traceback
+import sys
 
 import tkinter as tk
 
@@ -182,8 +183,6 @@ def SizeConvert(sizetext:str):
     elif text.endswith(" GB"):
         return round(float(sizetext.removesuffix(" GB")),3)
     return None
-
-import sys
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 plugin_api_dir = os.path.join(script_dir, "PluginAPI")
